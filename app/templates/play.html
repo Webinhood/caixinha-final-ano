@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body text-center">
+                <h2 class="card-title mb-4">Gire o Caça-Níquel!</h2>
+                <p class="mb-3">Créditos restantes: <span id="credits">{{ credits }}</span></p>
+                
+                <div class="slot-machine mb-4">
+                    <div class="wheels-container">
+                        <div class="wheel" id="wheel1">
+                            <div class="wheel-inner">
+                                <div class="symbol"><i class="fas fa-gift"></i></div>
+                                <div class="symbol"><i class="fas fa-coins"></i></div>
+                                <div class="symbol"><i class="fas fa-star"></i></div>
+                                <div class="symbol"><i class="fas fa-gem"></i></div>
+                                <div class="symbol"><i class="fas fa-crown"></i></div>
+                            </div>
+                        </div>
+                        <div class="wheel" id="wheel2">
+                            <div class="wheel-inner">
+                                <div class="symbol"><i class="fas fa-gift"></i></div>
+                                <div class="symbol"><i class="fas fa-coins"></i></div>
+                                <div class="symbol"><i class="fas fa-star"></i></div>
+                                <div class="symbol"><i class="fas fa-gem"></i></div>
+                                <div class="symbol"><i class="fas fa-crown"></i></div>
+                            </div>
+                        </div>
+                        <div class="wheel" id="wheel3">
+                            <div class="wheel-inner">
+                                <div class="symbol"><i class="fas fa-gift"></i></div>
+                                <div class="symbol"><i class="fas fa-coins"></i></div>
+                                <div class="symbol"><i class="fas fa-star"></i></div>
+                                <div class="symbol"><i class="fas fa-gem"></i></div>
+                                <div class="symbol"><i class="fas fa-crown"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="spin-button" class="btn btn-primary btn-lg">
+                    <i class="fas fa-sync-alt me-2"></i>Girar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Winner Modal -->
+<div class="modal fade" id="winnerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Parabéns! Você Ganhou! 🎉</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Você ganhou R$50,00!</p>
+                <p>Seu código de prêmio é: <strong id="prize-code"></strong></p>
+                <p>Um email foi enviado com as instruções para resgatar seu prêmio.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loser Modal -->
+<div class="modal fade" id="loserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Não foi dessa vez...</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Infelizmente você não ganhou desta vez.</p>
+                <p id="credits-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Tentar Novamente</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    const wheels = $('.wheel-inner');
+    let isSpinning = false;
+    const symbols = ['gift', 'coins', 'star', 'gem', 'crown'];
+    
+    function spinWheel(wheelElement, delay, finalSymbol) {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                wheelElement.css({
+                    'animation': 'none'
+                });
+                wheelElement.outerHeight(); // Force reflow
+                wheelElement.css({
+                    'animation': 'spin 3s cubic-bezier(0.5, 0, 0.5, 1)'
+                });
+                
+                setTimeout(() => {
+                    wheelElement.css('animation', 'none');
+                    // Set final position
+                    const symbolIndex = symbols.indexOf(finalSymbol);
+                    wheelElement.css('transform', `translateY(-${symbolIndex * 20}%)`);
+                    resolve();
+                }, 3000);
+            }, delay);
+        });
+    }
+    
+    $('#spin-button').on('click', async function() {
+        if (isSpinning) return;
+        
+        isSpinning = true;
+        $(this).prop('disabled', true);
+        
+        // Make the API call
+        $.ajax({
+            url: '{{ url_for("main.spin") }}',
+            method: 'POST',
+            success: async function(response) {
+                if (response.success) {
+                    let finalSymbols;
+                    if (response.result) {
+                        // Winner - all symbols will be the same
+                        const winningSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+                        finalSymbols = [winningSymbol, winningSymbol, winningSymbol];
+                    } else {
+                        // Loser - at least one symbol will be different
+                        finalSymbols = [
+                            symbols[Math.floor(Math.random() * symbols.length)],
+                            symbols[Math.floor(Math.random() * symbols.length)],
+                            symbols[Math.floor(Math.random() * symbols.length)]
+                        ];
+                        // Make sure they're not all the same
+                        if (finalSymbols[0] === finalSymbols[1] && finalSymbols[1] === finalSymbols[2]) {
+                            finalSymbols[2] = symbols[(symbols.indexOf(finalSymbols[0]) + 1) % symbols.length];
+                        }
+                    }
+                    
+                    // Start spinning wheels with delays
+                    await Promise.all([
+                        spinWheel($('#wheel1 .wheel-inner'), 0, finalSymbols[0]),
+                        spinWheel($('#wheel2 .wheel-inner'), 500, finalSymbols[1]),
+                        spinWheel($('#wheel3 .wheel-inner'), 1000, finalSymbols[2])
+                    ]);
+                    
+                    // Update credits
+                    $('#credits').text(response.credits_remaining);
+                    
+                    if (response.result) {
+                        // Show winner modal
+                        $('#prize-code').text(response.prize_code);
+                        new bootstrap.Modal($('#winnerModal')).show();
+                    } else {
+                        // Show loser modal
+                        $('#credits-message').text(
+                            response.credits_remaining > 0 
+                                ? `Você ainda tem ${response.credits_remaining} tentativa(s)!` 
+                                : 'Suas tentativas acabaram.'
+                        );
+                        new bootstrap.Modal($('#loserModal')).show();
+                    }
+                    
+                    // Reset button state
+                    isSpinning = false;
+                    $('#spin-button').prop('disabled', false);
+                    
+                    // Redirect if no more credits
+                    if (response.credits_remaining <= 0) {
+                        setTimeout(() => {
+                            window.location.href = '{{ url_for("main.result") }}';
+                        }, 3000);
+                    }
+                }
+            },
+            error: function() {
+                alert('Erro ao girar o caça-níquel. Por favor, tente novamente.');
+                isSpinning = false;
+                $('#spin-button').prop('disabled', false);
+                wheels.css('animation', 'none');
+            }
+        });
+    });
+});
+</script>
+
+<style>
+.slot-machine {
+    width: 300px;
+    height: 200px;
+    margin: 0 auto;
+    background: #1a73e8;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    border: 2px solid white;
+    padding: 15px;
+}
+
+.wheels-container {
+    display: flex;
+    justify-content: space-around;
+    height: 100%;
+    gap: 10px;
+}
+
+.wheel {
+    flex: 1;
+    height: 100%;
+    background: #1557b0;
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+    border: 2px solid white;
+}
+
+.wheel-inner {
+    width: 100%;
+    height: 500%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.5s ease-out;
+}
+
+.symbol {
+    width: 100%;
+    height: 20%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1a73e8;
+    border-bottom: 2px solid white;
+}
+
+.symbol:last-child {
+    border-bottom: none;
+}
+
+.symbol i {
+    font-size: 2rem;
+    color: white;
+}
+
+@keyframes spin {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-80%); }
+}
+
+/* Melhorias visuais */
+.btn-primary {
+    background: #1557b0;
+    border-color: white;
+    padding: 12px 30px;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #1a73e8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.card {
+    background: #f8f9fa;
+    border: none;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.card-title {
+    color: #1a73e8;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+</style>
+{% endblock %}

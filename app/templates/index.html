@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">Bem-vindo!</h2>
+                <form id="identifier-form" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label for="identifier" class="form-label">Digite seu CPF:</label>
+                        <input type="text" class="form-control" id="identifier" name="identifier" 
+                               required>
+                        <div class="invalid-feedback">
+                            Por favor, digite um CPF válido.
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Continuar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#identifier').mask('000.000.000-00');
+    
+    $('#identifier-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        const identifier = $('#identifier').val();
+        
+        $.ajax({
+            url: '{{ url_for("main.validate_identifier") }}',
+            method: 'POST',
+            data: {
+                identifier: identifier
+            },
+            success: function(response) {
+                if (response.valid) {
+                    window.location.href = '{{ url_for("main.register") }}';
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function() {
+                alert('Erro ao validar o CPF. Por favor, tente novamente.');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

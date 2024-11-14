@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center">
+                <h2 class="card-title mb-4">
+                    {% if user.is_winner %}
+                        Parabéns! 🎉
+                    {% else %}
+                        Fim de Jogo
+                    {% endif %}
+                </h2>
+                
+                {% if user.is_winner %}
+                    <div class="alert alert-success mb-4">
+                        <h4 class="alert-heading">Você Ganhou R$50,00!</h4>
+                        <p class="mb-0">Seu código de prêmio é: <strong>{{ user.prize_code }}</strong></p>
+                        <hr>
+                        <p class="mb-0">Um email foi enviado com as instruções para resgatar seu prêmio.</p>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info mb-4">
+                        <p class="mb-0">Infelizmente você não ganhou desta vez.</p>
+                        <p class="mb-0">Obrigado por participar!</p>
+                    </div>
+                {% endif %}
+                
+                <div class="mb-4">
+                    <h5>Suas Tentativas:</h5>
+                    <ul class="list-group">
+                        {% for attempt in user.attempts %}
+                            <li class="list-group-item">
+                                Tentativa {{ attempt.attempt_number }}:
+                                {% if attempt.result %}
+                                    <span class="text-success">Ganhou! 🎉</span>
+                                {% else %}
+                                    <span class="text-danger">Não ganhou</span>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+                <a href="{{ url_for('main.index') }}" class="btn btn-primary">Voltar ao Início</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

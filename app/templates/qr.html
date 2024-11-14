@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center">
+                <h2 class="card-title mb-4">QR Code para Participação</h2>
+                <p class="mb-4">Escaneie o QR Code abaixo para participar da promoção:</p>
+                
+                <div class="qr-code-container mb-4">
+                    <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" class="img-fluid">
+                </div>
+                
+                <div class="alert alert-info">
+                    <p class="mb-0">Compartilhe este QR Code com os funcionários para que eles possam participar da promoção!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.qr-code-container {
+    max-width: 300px;
+    margin: 0 auto;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}
