@@ -2,20 +2,20 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-6">
+    <div class="col-12">
         <div class="card">
             <div class="card-body">
                 <h2 class="card-title text-center mb-4">Complete seu Cadastro</h2>
                 <form id="register-form" class="needs-validation" novalidate>
                     <div class="mb-3">
-                        <label for="name" class="form-label">Nome Completo:</label>
+                        <label for="name" class="form-label">Nome Completo</label>
                         <input type="text" class="form-control" id="name" name="name" required>
                         <div class="invalid-feedback">
                             Por favor, digite seu nome completo.
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label for="phone" class="form-label">Telefone:</label>
+                        <label for="phone" class="form-label">Telefone</label>
                         <input type="tel" class="form-control" id="phone" name="phone" required>
                         <div class="invalid-feedback">
                             Por favor, digite um telefone válido.
@@ -25,6 +25,33 @@
                         <button type="submit" class="btn btn-primary">Cadastrar</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Instruções -->
+<div class="modal fade" id="instructionsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Como Funciona o Jogo 🎮</h4>
+            </div>
+            <div class="modal-body">
+                <h5 class="mb-3">Regras do Jogo:</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2">✨ Você tem 3 tentativas para jogar</li>
+                    <li class="mb-2">💰 Prêmio: R$50,00 por ganhador</li>
+                    <li class="mb-2">🎯 Alinhe 3 símbolos iguais para ganhar</li>
+                    <li class="mb-2">🎁 Prêmio único por CPF</li>
+                </ul>
+                <h5 class="mb-3">Premiação:</h5>
+                <p>Se você ganhar, receberá um código único para resgatar seu prêmio de R$50,00!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="window.location.href='{{ url_for('main.play') }}'">
+                    Estou Pronto!
+                </button>
             </div>
         </div>
     </div>
@@ -51,7 +78,8 @@ $(document).ready(function() {
             data: formData,
             success: function(response) {
                 if (response.success) {
-                    window.location.href = '{{ url_for("main.play") }}';
+                    // Mostrar modal de instruções em vez de redirecionar direto
+                    $('#instructionsModal').modal('show');
                 } else {
                     alert(response.message);
                 }

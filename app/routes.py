@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
-from app.models import User, GameAttempt, ValidIdentifier
+from app.models import User, GameAttempt
 from app import db, mail
 from flask_mail import Message
 from validate_docbr import CPF
